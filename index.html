@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Timetable</title>
+	<title>Timetable Management - LibraryTime</title>
 
 	<script src="/scripts/fullcalendar-scheduler-6.0.0/index.global.js"></script>
 	<link rel="stylesheet" href="/styles/style.css">
@@ -14,6 +14,7 @@
 <body>
 	<!-- Working example of drag and drop: https://codepen.io/pen?editors=1010 -->
 	<header>
+		<h2>LibraryTime</h2>
 		<nav>
 			<ul>
 				<li><strong>Timetable</strong></li>
@@ -23,6 +24,7 @@
 		</nav>
 	</header>
 	<main>
+		<h1>Timetable Management</h1>
 		<div id="activities" class="activity-wrapper">
 			<span class="draggable-activity" style="background-color: pink;" data-title="B" data-duration="01:00"
 				data-color="pink">B (Cash)</span>
@@ -139,7 +141,7 @@
 				},
 				customButtons: {
 					delete: {
-						text: 'delete',
+						text: '❌',
 						click: function () {
 							deleteSelectedEvent();
 						}
@@ -159,13 +161,13 @@
 				//console.log('Event clicked!', event);
 
 				selectedEventWrapper = eventWrapper;
-				selectedEventWrapper.el.style.borderColor = 'black';
+				selectedEventWrapper.el.classList.add('selected');
 			}
 
 			function deselectEvent() {
 				// Set the border colour back to where it was.
 				if (selectedEventWrapper) {
-					selectedEventWrapper.el.style.borderColor = selectedEventWrapper.event.borderColor;
+					selectedEventWrapper.el.classList.remove('selected');
 					selectedEventWrapper = undefined;
 				}
 			}

@@ -5,12 +5,14 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Activity Management</title>
+	<title>Activity Management - LibraryTime</title>
 	<script src="../scripts/activities.js"></script>
+	<link rel="stylesheet" href="/styles/style.css">
 </head>
 
 <body>
 	<header>
+		<h2>LibraryTime</h2>
 		<nav>
 			<ul>
 				<li><a href="/">Timetable</a></li>
@@ -20,10 +22,11 @@
 		</nav>
 	</header>
 	<main>
+		<h1>Activity Management</h1>
 		<form id=" new-resource-form">
 			<label for="new-resource-name"></label>
 			<input type="text" name="NewResourceName" id="new-resource-name">
-			<button type="submit">Add New Resource</button>
+			<button type="submit">Add New Activity</button>
 		</form>
 
 		<ul id="resource-list"></ul>
