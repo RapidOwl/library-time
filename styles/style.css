@@ -1,0 +1,22 @@
+main {
+	/* max-width: 1200px; */
+	margin: auto;
+}
+
+#calendar {
+	font-family: sans-serif;
+}
+
+.activity-wrapper {
+	margin: 16px 0;
+}
+
+.draggable-activity {
+	padding: 8px;
+	border: 1px solid black;
+	cursor: grab;
+}
+
+.draggable-activity:not(:last-child) {
+	margin-right: 4px;
+}

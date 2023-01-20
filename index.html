@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Timetable</title>
+
+	<script src="/scripts/fullcalendar-scheduler-6.0.0/index.global.js"></script>
+	<link rel="stylesheet" href="/styles/style.css">
+</head>
+
+<body>
+	<!-- Working example of drag and drop: https://codepen.io/pen?editors=1010 -->
+	<header>
+		<nav>
+			<ul>
+				<li><strong>Timetable</strong></li>
+				<li><a href="/resources">Resources</a></li>
+				<li><a href="/activities">Activities</a></li>
+			</ul>
+		</nav>
+	</header>
+	<main>
+		<div id="activities" class="activity-wrapper">
+			<span class="draggable-activity" style="background-color: pink;" data-title="B" data-duration="01:00"
+				data-color="pink">B (Cash)</span>
+			<span class="draggable-activity" style="background-color: hotpink;" data-title="B" data-duration="01:00"
+				data-color="hotpink">B (Ask Inspire)</span>
+			<span class="draggable-activity" style="background-color: hotpink;" data-title="B" data-duration="01:00"
+				data-color="hotpink">B (Ask Cash)</span>
+			<span class="draggable-activity" style="background-color: mediumpurple;" data-title="B"
+				data-duration="01:00" data-color="mediumpurple">B (Cash)</span>
+			<span class="draggable-activity" style="background-color: rebeccapurple;" data-title="B"
+				data-duration="01:00" data-color="rebeccapurple">B (Ask Inspire)</span>
+			<span class="draggable-activity" style="background-color: lightgray;" data-title="T" data-duration="00:15"
+				data-color="lightgray">T (Tea Break)</span>
+			<span class="draggable-activity" style="background-color: lightgray;" data-title="L" data-duration="00:30"
+				data-color="lightgray">L (Lunch)</span>
+			<span class="draggable-activity" style="background-color: lightgray;" data-title="A/L" data-duration="01:00"
+				data-color="lightgray">A/L (Annual Leave)</span>
+		</div>
+		<!-- <button id="extract-events">Extract Events</button> -->
+
+		<div id="calendar"></div>
+	</main>
+
+	<!-- TODO
+	- JavaScript Modules!
+	- Indexed DB -> Dexie
+	- Shift patterns (three weeks etc)
+	- Annual leave
+	- Clearer selecting of event
+	- Click anywhere to de-select event
+	- Saving events per date?
+	- Consider using CUID for ids (https://github.com/paralleldrive/cuid)
+	- Dark mode (is this sensible for printing?)
+	-->
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			let calendarEl = document.getElementById('calendar');
+			let currentMaxId = 0;
+			let selectedEventWrapper;
+			let initialDate;
+			let eventsFromStorage = [];
+
+			new FullCalendar.Draggable(document.getElementById('activities'), {
+				itemSelector: '.draggable-activity',
+				eventData: function (eventEl) {
+					let id = currentMaxId++;
+
+					return {
+						id: id,
+						title: eventEl.dataset.title,
+						duration: eventEl.dataset.duration,
+						color: eventEl.dataset.color,
+						textColor: '#000000'
+					};
+				}
+			});
+
+			if (localStorage.getItem("startDate")) {
+				initialDate = new Date(localStorage.getItem("startDate"));
+			} else {
+				initialDate = new Date();
+			}
+
+			try {
+				eventsFromStorage = JSON.parse(localStorage.getItem('events'));
+			} catch { }
+
+			let calendar = new FullCalendar.Calendar(calendarEl, {
+				editable: true,
+				droppable: true,
+				eventDurationEditable: true,
+				eventOverlap: false,
+				initialDate: initialDate,
+				resources: getResources(),
+				height: "auto",
+				resourceAreaWidth: "150px",
+				slotDuration: '00:15:00',
+				slotMinWidth: '10',
+				events: eventsFromStorage,
+				initialView: 'resourceTimelineDay',
+				slotMinTime: '08:00',
+				slotMaxTime: '19:00',
+				schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+				// drop: function (ev) {
+				// 	// Called BEFORE an externally dragged event is added to the calendar object!
+				// 	persistEvents();
+				// },
+				// eventAdd: (ev) => {
+				// 	// This doesn't seem to fire on drag in, desite the docs saying it does
+				// 	console.log('Event added');
+				// },
+				eventReceive: (ev) => {
+					// Called AFTER an externally dragged event is added to the calendar object!
+					console.log('Event received');
+					persistEvents();
+				},
+				eventDrop: function (ev) {
+					// Called when we move an event around on the calendar
+					persistEvents();
+				},
+				eventResize: function (eventResizeInfo) {
+					persistEvents();
+				},
+				eventRemove: () => {
+					persistEvents();
+				},
+				eventClick: (event) => { selectEvent(event); },
+				dateClick: (event) => {
+					deselectEvent();
+				},
+				datesSet: function (view, element) {
+					localStorage.setItem("startDate", view.start);
+				},
+				customButtons: {
+					delete: {
+						text: 'delete',
+						click: function () {
+							deleteSelectedEvent();
+						}
+					}
+				},
+				headerToolbar: {
+					left: 'delete',
+					center: 'title',
+					right: 'today prev,next'
+				}
+			});
+
+			calendar.render();
+
+			function selectEvent(eventWrapper) {
+				deselectEvent();
+				//console.log('Event clicked!', event);
+
+				selectedEventWrapper = eventWrapper;
+				selectedEventWrapper.el.style.borderColor = 'black';
+			}
+
+			function deselectEvent() {
+				// Set the border colour back to where it was.
+				if (selectedEventWrapper) {
+					selectedEventWrapper.el.style.borderColor = selectedEventWrapper.event.borderColor;
+					selectedEventWrapper = undefined;
+				}
+			}
+
+			function deleteSelectedEvent() {
+				if (selectedEventWrapper) {
+					selectedEventWrapper.event.remove();
+				}
+			}
+
+			function extractEvents() {
+				console.log('Events');
+				console.log(JSON.stringify(calendar.getEvents()));
+				console.log('Resources');
+				console.log(JSON.stringify(calendar.getResources()));
+				console.log('Events from Resources');
+				calendar
+					.getResources()
+					.forEach((resource) => {
+						console.log(resource.id);
+						console.log(JSON.stringify(resource.getEvents()));
+					});
+			}
+
+			function persistEvents() {
+				let eventsToPersist = calendar
+					.getEvents()
+					.map((event) => {
+						// Strip out all the object cruft
+						let parsedEvent = JSON.parse(JSON.stringify(event));
+
+						// Manually add the resource ID to the event
+						parsedEvent.resourceId = event.getResources()[0].id;
+
+						return parsedEvent;
+					});
+
+				localStorage.setItem('events', JSON.stringify(eventsToPersist));
+			}
+
+			function getResources() {
+				try {
+					return localStorage.getItem('resources')
+						? JSON.parse(localStorage.getItem('resources'))
+						: []
+				} catch {
+					return [];
+				}
+			}
+		});
+	</script>
+</body>
+
+</html>
